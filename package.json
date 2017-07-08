@@ -1,8 +1,8 @@
 {
-  "name": "package2.json",
+  "name": "flashover",
   "version": "1.0.0",
   "description": "SPA Frontend for SIGCAW",
-  "author": "BVSF-Devs",
+  "author": "BVSF",
   "private": true,
   "scripts": {
     "dev": "node build/dev-server.js",

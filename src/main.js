@@ -9,6 +9,7 @@ Vue.use(VueResource)
 
 Vue.config.productionTip = false
 Vue.http.options.emulateJSON = true
+Vue.config.productionTip = false
 
 /* eslint-disable no-new */
 new Vue({
