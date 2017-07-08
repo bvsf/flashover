@@ -2,7 +2,7 @@
 Frontend para SIGCAW
 
 Se instala de la siguiente forma:
-xport P
+
 Primero hay que instalar curl (si es que no lo tenemos) para poder instalar Node.JS (de paso sirve para probar consultas html por consola):
 ```
 sudo apt-get install curl
