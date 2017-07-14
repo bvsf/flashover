@@ -1,89 +1,135 @@
 <template>
-    <form>
-      <fieldset>
-        <legend>
-          <h2>Log In</h2>
-          <p>Log in to your account to get some great quotes.</p>
-        </legend>
-        <div v-if="error">
-          <p>{{ error }}</p>
+  <div class="container container-table">
+      <div class="row vertical-10p">
+        <div class="container">
+          <img src="/static/img/logo.png" class="center-block logo">
+          <div class="text-center col-md-4 col-sm-offset-4">
+            <!-- login form -->
+            <form class="ui form loginForm"  @submit.prevent="checkCreds">
+
+              <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-envelope"></i></span>
+                <input class="form-control" name="username" placeholder="Username" type="text" v-model="username">
+              </div>
+
+              <div class="input-group">
+                <span class="input-group-addon"><i class="fa fa-lock"></i></span>
+                <input class="form-control" name="password" placeholder="Password" type="password" v-model="password">
+              </div>
+              <button type="submit" v-bind:class="'btn btn-primary btn-lg ' + loading">Submit</button>
+            </form>
+
+            <!-- errors -->
+            <div v-if=response class="text-red"><p>{{response}}</p></div>
+          </div>
         </div>
-        <p>
-          <input type="text" v-model="credenciales.usuario" placeholder="Usuario">
-        </p>
-        <p>
-          <input type="password" v-model="credenciales.password" placeholder="">
-        </p>
-        <p>{{ password_error}}</p>
-        
-        <button v-on:click="login">Login</button>
-      </fieldset>
-    </form>
+      </div>
+  </div>
 </template>
 
 <script>
-  const API_URL = 'http://localhost:8000/'
-  const LOGIN_URL = API_URL + 'rest-auth/login/'
+import api from '../api'
 
-  export default {
-    name: 'login',
+export default {
+  name: 'Login',
+  data (router) {
+    return {
+      section: 'Login',
+      loading: '',
+      username: '',
+      password: '',
+      response: ''
+    }
+  },
+  methods: {
+    checkCreds () {
+      const {username, password} = this
 
-    data () {
-      return {
-        credenciales: {
-          usuario: '',
-          password: ''
-        },
-        error: '',
-        password_error: ''
-      }
-    },
+      this.toggleLoading()
+      this.resetResponse()
+      this.$store.commit('TOGGLE_LOADING')
 
-    methods: {
-      user: {
-        authenticated: false
-      },
-  
-      login () {
-        var credenciales = {
-          username: this.credenciales.usuario,
-          password: this.credenciales.password
-        }
-        this.error = ''
-        this.password_error = ''
+      /* Making API call to authenticate a user */
+      api.request('post', '/login', {username, password})
+      .then(response => {
+        this.toggleLoading()
 
-        // console.log(LOGIN_URL)
-        // console.log(credenciales)
-
-        this.$http.post(LOGIN_URL, credenciales).then(response => {
-          // console.log('exito')
-          // console.log(JSON.parse(response.bodyText))
-
-          var data = JSON.parse(response.bodyText)
-
-          localStorage.setItem('access_token', data.token)
-
-          this.user.authenticated = true
-
-        // Redirect to a specified route
-        // if(redirect) {
-        //   router.go(redirect)
-        // }
-        }, response => {
-          // console.log('error')
-          // console.log(JSON.parse(response.bodyText))
-
-          var data = JSON.parse(response.bodyText)
-
-          for (var k in data) {
-            if (k === 'password') {
-              this.password_error = data.password[0]
-            } else {
-              this.error = data[k][0]
-            }
+        var data = response.data
+        /* Checking if error object was returned from the server */
+        if (data.error) {
+          var errorName = data.error.name
+          if (errorName) {
+            this.response = errorName === 'InvalidCredentialsError'
+            ? 'Username/Password incorrect. Please try again.'
+            : errorName
+          } else {
+            this.response = data.error
           }
-        })
-      }
+
+          return
+        }
+
+        /* Setting user in the state and caching record to the localStorage */
+        if (data.user) {
+          var token = 'Bearer ' + data.token
+
+          this.$store.commit('SET_USER', data.user)
+          this.$store.commit('SET_TOKEN', token)
+
+          if (window.localStorage) {
+            window.localStorage.setItem('user', JSON.stringify(data.user))
+            window.localStorage.setItem('token', token)
+          }
+
+          this.$router.push(data.redirect)
+        }
+      })
+      .catch(error => {
+        this.$store.commit('TOGGLE_LOADING')
+        console.log(error)
+
+        this.response = 'Server appears to be offline'
+        this.toggleLoading()
+      })
+    },
+    toggleLoading () {
+      this.loading = (this.loading === '') ? 'loading' : ''
+    },
+    resetResponse () {
+      this.response = ''
     }
   }
+}
 </script>
+
+<style>
+html, body, .container-table {
+  height: 100%;
+  background-color: #282B30 !important;
+}
+.container-table {
+    display: table;
+    color: white;
+}
+.vertical-center-row {
+    display: table-cell;
+    vertical-align: middle;
+}
+.vertical-20p {
+  padding-top: 20%;
+}
+.vertical-10p {
+  padding-top: 10%;
+}
+.logo {
+  width: 15em;
+  padding: 3em;
+}
+.loginForm .input-group {
+  padding-bottom: 1em;
+  height: 4em;
+}
+.input-group input {
+  height: 4em;
+}
+</style>
