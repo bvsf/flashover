@@ -50,28 +50,21 @@ export default {
       this.$store.commit('TOGGLE_LOADING')
 
       /* Making API call to authenticate a user */
-      api.request('post', '/login', {username, password})
+      console.log(this)
+      api.request('post', 'http://localhost:8000/rest-auth/login/', {username, password})
       .then(response => {
         this.toggleLoading()
 
         var data = response.data
-        /* Checking if error object was returned from the server */
-        if (data.error) {
-          var errorName = data.error.name
-          if (errorName) {
-            this.response = errorName === 'InvalidCredentialsError'
-            ? 'Username/Password incorrect. Please try again.'
-            : errorName
-          } else {
-            this.response = data.error
-          }
-
-          return
-        }
-
+        console.log('response:', response)
+        console.log('data:', data)
+        console.log('data.user:', data.user)
+        console.log('data.error:', data.error)
         /* Setting user in the state and caching record to the localStorage */
         if (data.user) {
           var token = 'Bearer ' + data.token
+
+          console.log(token)
 
           this.$store.commit('SET_USER', data.user)
           this.$store.commit('SET_TOKEN', token)
@@ -81,14 +74,20 @@ export default {
             window.localStorage.setItem('token', token)
           }
 
-          this.$router.push(data.redirect)
+          this.$router.push('/dash')
         }
       })
       .catch(error => {
         this.$store.commit('TOGGLE_LOADING')
-        console.log(error)
+        if (error.response.data.non_field_errors) {
+          console.log('responseText', error.response.data.non_field_errors[0])
+          this.response = error.response.data.non_field_errors[0]
+        }
+        if (error.response.data.password[0]) {
+          console.log('responseText', error.response.data.password[0])
+          this.response = error.response.data.password[0]
+        }
 
-        this.response = 'Server appears to be offline'
         this.toggleLoading()
       })
     },
