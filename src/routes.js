@@ -14,11 +14,11 @@ import ReposView from './components/views/Repos.vue'
 // Routes
 const routes = [
   {
-    path: '/login',
+    path: '/',
     component: LoginView
   },
   {
-    path: '/',
+    path: '/dash',
     component: DashView,
     children: [
       {
